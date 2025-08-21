@@ -9,7 +9,7 @@ from typing import List, Optional, Tuple
 # --- Конфигурация ---
 # ВАЖНО: Для продакшена лучше вернуть os.environ.get("OPENROUTER_API_KEY")
 # Я оставляю ключ здесь для удобства дальнейшего тестирования.
-OPENROUTER_API_KEY = "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"
+OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
 OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
 MODEL_NAME = "mistralai/mistral-medium-3.1" 
 

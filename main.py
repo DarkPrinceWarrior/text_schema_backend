@@ -11,7 +11,25 @@ OPENROUTER_API_URL = os.environ.get(
     "OPENROUTER_API_URL",
     "https://openrouter.ai/api/v1/chat/completions",
 )
-MODEL_NAME = os.environ.get("MODEL_NAME", "mistralai/mistral-medium-3.1")
+
+# --- Доступные модели ---
+AVAILABLE_MODELS = [
+    {
+        "id": "mistralai/mistral-medium-3.1",
+        "name": "Mistral Medium 3.1",
+        "description": "Быстрая и точная модель от Mistral AI",
+    },
+    {
+        "id": "qwen/qwen-2.5-72b-instruct",
+        "name": "Qwen2.5 72B Instruct",
+        "description": "Быстрая многоязычная модель от Alibaba Cloud",
+    },
+    {
+        "id": "openai/gpt-oss-120b",
+        "name": "GPT-OSS 120B",
+        "description": "Открытая модель OpenAI с 120 млрд параметров",
+    },
+]
 
 # --- Модели данных (без изменений) ---
 
@@ -56,6 +74,7 @@ class FlowJSON(BaseModel):
 
 class TextInput(BaseModel):
     text: str
+    model: str
 
 
 # --- Создание FastAPI приложения ---
@@ -122,7 +141,7 @@ The process starts when a client submits a request. The system automatically reg
 """
 
 
-async def call_llm_for_schema(text: str) -> dict:
+async def call_llm_for_schema(text: str, model: str) -> dict:
     if not OPENROUTER_API_KEY:
         raise HTTPException(status_code=500, detail="OPENROUTER_API_KEY не установлен.")
 
@@ -132,7 +151,7 @@ async def call_llm_for_schema(text: str) -> dict:
     }
 
     payload = {
-        "model": MODEL_NAME,
+        "model": model,
         "messages": [
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": text},
@@ -159,10 +178,17 @@ async def call_llm_for_schema(text: str) -> dict:
             )
 
 
+@app.get("/models")
+async def get_models():
+    """Получить список доступных моделей для выбора"""
+    return {"models": AVAILABLE_MODELS}
+
+
 @app.post("/process-text", response_model=FlowJSON)
 async def process_text(data: TextInput):
     print(f"Получен текст для обработки LLM: {data.text[:100]}...")
-    llm_generated_json = await call_llm_for_schema(data.text)
+    print(f"Используемая модель: {data.model}")
+    llm_generated_json = await call_llm_for_schema(data.text, data.model)
 
     try:
         if hasattr(FlowJSON, "model_validate"):

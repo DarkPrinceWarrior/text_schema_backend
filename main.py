@@ -1,17 +1,14 @@
 import os
-import httpx 
+import httpx
 import json
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-from typing import List, Optional, Tuple
 
 # --- Конфигурация ---
-# ВАЖНО: Для продакшена лучше вернуть os.environ.get("OPENROUTER_API_KEY")
-# Я оставляю ключ здесь для удобства дальнейшего тестирования.
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
-OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
-MODEL_NAME = "mistralai/mistral-medium-3.1" 
+OPENROUTER_API_URL = os.environ.get("OPENROUTER_API_URL", "https://openrouter.ai/api/v1/chat/completions")
+MODEL_NAME = os.environ.get("MODEL_NAME", "mistralai/mistral-medium-3.1")
 
 # --- Модели данных (без изменений) ---
 
@@ -24,13 +21,13 @@ class Node(BaseModel):
     id: str
     type: str
     label: str
-    actor: Optional[str] = None
-    sourceSpan: Optional[Tuple[int, int]] = None
+    actor: str | None = None
+    sourceSpan: tuple[int, int] | None = None
 
 class Edge(BaseModel):
     from_node: str = Field(alias="from")
     to: str
-    label: Optional[str] = None
+    label: str | None = None
 
     if ConfigDict is not None:
         model_config = ConfigDict(populate_by_name=True)
@@ -41,13 +38,13 @@ class Edge(BaseModel):
 class Lane(BaseModel):
     id: str
     label: str
-    nodes: List[str]
+    nodes: list[str]
 
 class FlowJSON(BaseModel):
     meta: dict
-    nodes: List[Node]
-    edges: List[Edge]
-    lanes: Optional[List[Lane]] = None
+    nodes: list[Node]
+    edges: list[Edge]
+    lanes: list[Lane] | None = None
 
 class TextInput(BaseModel):
     text: str
@@ -125,7 +122,7 @@ async def call_llm_for_schema(text: str) -> dict:
         "Authorization": f"Bearer {OPENROUTER_API_KEY}",
         "Content-Type": "application/json"
     }
-    
+
     payload = {
         "model": MODEL_NAME,
         "messages": [
@@ -152,7 +149,7 @@ async def call_llm_for_schema(text: str) -> dict:
 async def process_text(data: TextInput):
     print(f"Получен текст для обработки LLM: {data.text[:100]}...")
     llm_generated_json = await call_llm_for_schema(data.text)
-    
+
     try:
         if hasattr(FlowJSON, 'model_validate'):
              validated_schema = FlowJSON.model_validate(llm_generated_json)

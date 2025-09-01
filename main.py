@@ -15,9 +15,9 @@ OPENROUTER_API_URL = os.environ.get(
 # --- Доступные модели ---
 AVAILABLE_MODELS = [
     {
-        "id": "mistralai/mistral-medium-3.1",
-        "name": "Mistral Medium 3.1",
-        "description": "Быстрая и точная модель от Mistral AI",
+        "id": "openai/gpt-oss-120b",
+        "name": "GPT-OSS 120B",
+        "description": "Открытая модель OpenAI с 120 млрд параметров",
     },
     {
         "id": "qwen/qwen-2.5-72b-instruct",
@@ -25,9 +25,9 @@ AVAILABLE_MODELS = [
         "description": "Быстрая многоязычная модель от Alibaba Cloud",
     },
     {
-        "id": "openai/gpt-oss-120b",
-        "name": "GPT-OSS 120B",
-        "description": "Открытая модель OpenAI с 120 млрд параметров",
+        "id": "mistralai/mistral-medium-3.1",
+        "name": "Mistral Medium 3.1",
+        "description": "Быстрая и точная модель от Mistral AI",
     },
 ]
 

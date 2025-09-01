@@ -26,7 +26,6 @@ class Node(BaseModel):
     type: str
     label: str
     actor: str | None = None
-    sourceSpan: tuple[int, int] | None = None
 
 
 class Edge(BaseModel):
@@ -82,16 +81,14 @@ You are an expert business process analyst. Your task is to convert a user's tex
 **Your Goal:**
 1.  Identify all process steps (`action`), decision points (`decision`), start, and end points.
 2.  Identify the actor (person, role, or system) responsible for each action.
-3.  **For each node, provide the character indices from the original text in the `sourceSpan` field as a `[start, end]` array.** This is crucial for traceability.
 
 **FlowJSON Schema:**
-- `nodes`: A list of process steps. Each node must have `id`, `type`, `label`, and `sourceSpan`.
+- `nodes`: A list of process steps. Each node must have `id`, `type`, `label`.
 - `edges`: A list of connections between nodes.
 - `lanes`: A list of actors.
 
 **Rules:**
 - Your output MUST be ONLY a valid JSON object. No explanations or markdown.
-- `sourceSpan` must be accurate. For "The client submits a request.", the span for the corresponding node should be `[4, 31]`.
 
 **Example:**
 
@@ -102,14 +99,14 @@ The process starts when a client submits a request. The system automatically reg
 {
   "meta": { "version": "1.0", "title": "Обработка запроса клиента" },
   "nodes": [
-    { "id": "n0", "type": "start", "label": "Старт", "sourceSpan": [0, 0] },
-    { "id": "n1", "type": "action", "label": "Клиент подает запрос", "actor": "Клиент", "sourceSpan": [25, 49] },
-    { "id": "n2", "type": "action", "label": "Система регистрирует запрос", "actor": "Система", "sourceSpan": [51, 88] },
-    { "id": "n3", "type": "action", "label": "Специалист поддержки проверяет запрос", "actor": "Специалист поддержки", "sourceSpan": [96, 134] },
-    { "id": "n4", "type": "decision", "label": "Запрос полный?", "sourceSpan": [136, 159] },
-    { "id": "n5", "type": "action", "label": "Обработать запрос", "actor": "Специалист поддержки", "sourceSpan": [161, 186] },
-    { "id": "n6", "type": "action", "label": "Связаться с клиентом для уточнений", "actor": "Специалист поддержки", "sourceSpan": [197, 237] },
-    { "id": "n7", "type": "end", "label": "Конец", "sourceSpan": [237, 237] }
+    { "id": "n0", "type": "start", "label": "Старт" },
+    { "id": "n1", "type": "action", "label": "Клиент подает запрос", "actor": "Клиент" },
+    { "id": "n2", "type": "action", "label": "Система регистрирует запрос", "actor": "Система" },
+    { "id": "n3", "type": "action", "label": "Специалист поддержки проверяет запрос", "actor": "Специалист поддержки" },
+    { "id": "n4", "type": "decision", "label": "Запрос полный?" },
+    { "id": "n5", "type": "action", "label": "Обработать запрос", "actor": "Специалист поддержки" },
+    { "id": "n6", "type": "action", "label": "Связаться с клиентом для уточнений", "actor": "Специалист поддержки" },
+    { "id": "n7", "type": "end", "label": "Конец" }
   ],
   "edges": [
     { "from": "n0", "to": "n1" }, { "from": "n1", "to": "n2" }, { "from": "n2", "to": "n3" },

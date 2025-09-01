@@ -7,7 +7,10 @@ from pydantic import BaseModel, Field
 
 # --- Конфигурация ---
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
-OPENROUTER_API_URL = os.environ.get("OPENROUTER_API_URL", "https://openrouter.ai/api/v1/chat/completions")
+OPENROUTER_API_URL = os.environ.get(
+    "OPENROUTER_API_URL",
+    "https://openrouter.ai/api/v1/chat/completions",
+)
 MODEL_NAME = os.environ.get("MODEL_NAME", "mistralai/mistral-medium-3.1")
 
 # --- Модели данных (без изменений) ---
@@ -17,12 +20,14 @@ try:
 except ImportError:
     ConfigDict = None
 
+
 class Node(BaseModel):
     id: str
     type: str
     label: str
     actor: str | None = None
     sourceSpan: tuple[int, int] | None = None
+
 
 class Edge(BaseModel):
     from_node: str = Field(alias="from")
@@ -32,13 +37,16 @@ class Edge(BaseModel):
     if ConfigDict is not None:
         model_config = ConfigDict(populate_by_name=True)
     else:
+
         class Config:
             allow_population_by_field_name = True
+
 
 class Lane(BaseModel):
     id: str
     label: str
     nodes: list[str]
+
 
 class FlowJSON(BaseModel):
     meta: dict
@@ -46,8 +54,10 @@ class FlowJSON(BaseModel):
     edges: list[Edge]
     lanes: list[Lane] | None = None
 
+
 class TextInput(BaseModel):
     text: str
+
 
 # --- Создание FastAPI приложения ---
 
@@ -114,35 +124,42 @@ The process starts when a client submits a request. The system automatically reg
 }
 """
 
+
 async def call_llm_for_schema(text: str) -> dict:
     if not OPENROUTER_API_KEY:
         raise HTTPException(status_code=500, detail="OPENROUTER_API_KEY не установлен.")
 
     headers = {
         "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
     }
 
     payload = {
         "model": MODEL_NAME,
         "messages": [
             {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": text}
+            {"role": "user", "content": text},
         ],
-        "response_format": {"type": "json_object"}
+        "response_format": {"type": "json_object"},
     }
 
     async with httpx.AsyncClient() as client:
         try:
-            response = await client.post(OPENROUTER_API_URL, headers=headers, json=payload, timeout=60.0)
+            response = await client.post(
+                OPENROUTER_API_URL, headers=headers, json=payload, timeout=60.0
+            )
             response.raise_for_status()
             llm_response = response.json()
-            json_content_str = llm_response['choices'][0]['message']['content']
+            json_content_str = llm_response["choices"][0]["message"]["content"]
             return json.loads(json_content_str)
         except httpx.RequestError as exc:
-            raise HTTPException(status_code=503, detail=f"Ошибка при запросе к OpenRouter: {exc}")
+            raise HTTPException(
+                status_code=503, detail=f"Ошибка при запросе к OpenRouter: {exc}"
+            )
         except (json.JSONDecodeError, KeyError, IndexError) as exc:
-            raise HTTPException(status_code=500, detail=f"Не удалось разобрать ответ от LLM: {exc}")
+            raise HTTPException(
+                status_code=500, detail=f"Не удалось разобрать ответ от LLM: {exc}"
+            )
 
 
 @app.post("/process-text", response_model=FlowJSON)
@@ -151,11 +168,13 @@ async def process_text(data: TextInput):
     llm_generated_json = await call_llm_for_schema(data.text)
 
     try:
-        if hasattr(FlowJSON, 'model_validate'):
-             validated_schema = FlowJSON.model_validate(llm_generated_json)
-             return validated_schema
+        if hasattr(FlowJSON, "model_validate"):
+            validated_schema = FlowJSON.model_validate(llm_generated_json)
+            return validated_schema
         else:
-             validated_schema = FlowJSON.parse_obj(llm_generated_json)
-             return validated_schema
+            validated_schema = FlowJSON.parse_obj(llm_generated_json)
+            return validated_schema
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Ошибка валидации схемы от LLM: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Ошибка валидации схемы от LLM: {e}"
+        )

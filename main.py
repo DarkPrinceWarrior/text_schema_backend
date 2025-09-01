@@ -52,7 +52,7 @@ class TextInput(BaseModel):
 # --- Создание FastAPI приложения ---
 
 app = FastAPI(
-    title="Text to Diagram API",
+    title="Text to Schema API",
     description="API для преобразования текста в FlowJSON-схему",
     version="0.4.0",
 )
